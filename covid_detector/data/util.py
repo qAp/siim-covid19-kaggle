@@ -61,3 +61,21 @@ def _prepare_test_examples(dir_siim, dir_jpg):
     df = pd.merge(df, df_jpg, left_on='image_id',
                   right_on='image_id', how='inner')
     return df
+
+
+def scale_box(box, scale0=1, scale1=1):
+    box = {k: scale1 * v if k in ('x', 'width')
+           else scale0 * v for k, v in box.items()}
+    box = {k: np.around(v, decimals=5) for k, v in box.items()}
+    return box
+
+
+def _scale_box(row, sz=256):
+    if pd.isna(row.boxes):
+        return np.nan
+
+    scale0 = sz / row.dim0
+    scale1 = sz / row.dim1
+    boxes = eval(row.boxes)
+    boxes_scaled = [scale_box(box, scale0, scale1) for box in boxes]
+    return boxes_scaled
