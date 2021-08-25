@@ -147,6 +147,10 @@ class Abnormality(pl.LightningDataModule):
         self.dir_data = args.get('dir_data', DIR_DATA)
         self.dir_data_tmp = args.get('dir_data_tmp', DIR_DATA_TMP)
         self.jpg_img_size = args.get('jpg_img_size', JPG_IMG_SIZE)
+
+        self.transform = A.Compose(
+            [ToTensorV2(p=1)], 
+            bbox_params=A.BboxParams(format='coco', label_fields=['cls']))
         
     def prepare_data(self):
         dir_jpg = self.dir_data / f'siim-covid19-resized-to-{self.jpg_img_size}px-jpg'
