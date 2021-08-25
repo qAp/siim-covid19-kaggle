@@ -1,3 +1,4 @@
+from os import truncate
 from pathlib import Path
 import argparse
 
@@ -18,6 +19,7 @@ from covid_detector.util import *
 
 
 DIR_DATA = Path('/kaggle/input')
+DIR_DATA_TMP = Path('/kaggle/data/processed/abnormality')
 JPG_IMG_SIZE = 256
 CAT_NAMES = ['opacity', 'negative', 'typical', 'indeterminate', 'atypical']
 MAX_NUM_INSTANCES = 100
@@ -143,6 +145,7 @@ class Abnormality(pl.LightningDataModule):
         super().__init__(args)
         args = vars(args) if args is not None else {}
         self.dir_data = args.get('dir_data', DIR_DATA)
+        self.dir_data_tmp = args.get('dir_data_tmp', DIR_DATA_TMP)
         self.jpg_img_size = args.get('jpg_img_size', JPG_IMG_SIZE)
         
     def prepare_data(self):
@@ -155,10 +158,11 @@ class Abnormality(pl.LightningDataModule):
         df_train = _prepare_train_examples(dir_siim, dir_jpg)
         # df_test  = _prepare_test_examples(dir_siim, dir_jpg)
 
-        df_train.to_feather(self.dirname / 'abnormality_train.feather')
+        self.dir_data_tmp.mkdir(parents=True, exist_ok=True)
+        df_train.to_feather(self.dir_data_tmp / 'train.feather')
 
     def setup(self):
-        df = pd.read_csv(self.dirname / 'abnormality_train.feather')
+        df = pd.read_csv(self.dirname / 'train.feather')
         dataset = AbnormalityDataset(df, transform=self.transform)
         num_examples = len(dataset)
         num_train_examples = int(0.8 * num_examples)
