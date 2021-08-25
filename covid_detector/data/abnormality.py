@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import random_split
 import pytorch_lightning as pl
 
 import PIL
@@ -151,5 +152,20 @@ class Abnormality(pl.LightningDataModule):
         dir_siim = self.dir_data / 'siim-covid19-detection'
         assert dir_siim.exists()
             
-        _prepare_train_examples(dir_siim, dir_jpg)
-        _prepare_test_examples(dir_siim, dir_jpg)
+        df_train = _prepare_train_examples(dir_siim, dir_jpg)
+        # df_test  = _prepare_test_examples(dir_siim, dir_jpg)
+
+        df_train.to_feather(self.dirname / 'abnormality_train.feather')
+
+    def setup(self):
+        df = pd.read_csv(self.dirname / 'abnormality_train.feather')
+        dataset = AbnormalityDataset(df, transform=self.transform)
+        num_examples = len(dataset)
+        num_train_examples = int(0.8 * num_examples)
+        num_valid_examples = num_examples - num_train_examples
+
+        self.train_dataset, self.val_dataset = random_split(
+            dataset, lengths=[num_train_examples, num_valid_examples])
+
+
+
