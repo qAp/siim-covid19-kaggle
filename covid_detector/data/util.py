@@ -9,10 +9,15 @@ import matplotlib.pyplot as plt
 
 
 
-STUDY_LEVEL_TARGETS_LONG = ['Negative for Pneumonia', 'Typical Appearance', 'Indeterminate Appearance',
+STUDY_LEVEL_TARGETS_LONG = ['Negative for Pneumonia', 
+                            'Typical Appearance', 
+                            'Indeterminate Appearance',
                             'Atypical Appearance']
+
 STUDY_LEVEL_TARGETS_SHORT = ["negative",
-                             "typical", "indeterminate", "atypical"]
+                             "typical", 
+                             "indeterminate", 
+                             "atypical"]
 
 
 def _prepare_train_examples(dir_siim, dir_jpg):

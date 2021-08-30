@@ -16,12 +16,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from covid_detector.util import *
-from covid_detector.data.util import _prepare_train_examples, _prepare_test_examples
+from covid_detector.data.util import (_prepare_train_examples, 
+                                      _prepare_test_examples)
 
 
 DIR_DATA = Path('/kaggle/input')
 DIR_DATA_TMP = Path('/kaggle/data/processed/abnormality')
-JPG_IMG_SIZE = 256
+JPG_IMG_SIZE = 512
 CAT_NAMES = ['opacity', 'negative', 'typical', 'indeterminate', 'atypical']
 MAX_NUM_INSTANCES = 100
 
@@ -40,10 +41,10 @@ class AbnormalityDataset(torch.utils.data.Dataset):
         self._transform = transform
 
     def __len__(self):
-        return len(df)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        r = df.iloc[idx]
+        r = self.df.iloc[idx]
 
         img = PIL.Image.open(r.pth_jpg).convert('RGB')
         img_width, img_height = img.size
@@ -52,7 +53,7 @@ class AbnormalityDataset(torch.utils.data.Dataset):
         bboxes = []
         cls = []
 
-        if isinstance(r.boxes, list):
+        if isinstance(r.boxes, (list, np.ndarray)):
             for d_box in r.boxes:
                 x, y = d_box['x'], d_box['y']
                 width, height = d_box['width'], d_box['height']
@@ -99,7 +100,7 @@ class AbnormalityDataset(torch.utils.data.Dataset):
 
     @staticmethod
     def show(img, target):
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(8, 8))
 
         img_ = img.copy()
 
@@ -110,7 +111,7 @@ class AbnormalityDataset(torch.utils.data.Dataset):
 
             cv2.putText(img_, CAT_NAMES[cls], org=(x0 + 5, y0 + 20),
                         fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=2,
+                        fontScale=1,
                         color=(255, 0, 0))
 
         ax.imshow(img_)
@@ -122,8 +123,10 @@ def abnormality_collate_fn(batch):
     batch_size = len(batch)
     image_size = 512
 
-    img_b = torch.zeros((batch_size, 3, image_size, image_size), dtype=torch.float32)
-    bbox_b = torch.full((batch_size, MAX_NUM_INSTANCES, 4), -1, dtype=torch.float32)
+    img_b = torch.zeros(
+        (batch_size, 3, image_size, image_size), dtype=torch.float32)
+    bbox_b = torch.full(
+        (batch_size, MAX_NUM_INSTANCES, 4), -1, dtype=torch.float32)
     cls_b = torch.full((batch_size, MAX_NUM_INSTANCES), -1, dtype=torch.int64)
 
     for i in range(batch_size):
@@ -136,7 +139,8 @@ def abnormality_collate_fn(batch):
         bbox_b[i, :num_elem] = torch.from_numpy(target['bbox'][:num_elem])
         cls_b[i, :num_elem] = torch.from_numpy(target['cls'][:num_elem])
 
-    target_b = {'bbox': bbox_b, 'cls': cls_b}
+    target_b = {'bbox': bbox_b, 'cls': cls_b,
+                'img_size': None, 'img_scale': None}
 
     return img_b, target_b
 
@@ -148,33 +152,57 @@ class Abnormality(pl.LightningDataModule):
         self.dir_data = args.get('dir_data', DIR_DATA)
         self.dir_data_tmp = args.get('dir_data_tmp', DIR_DATA_TMP)
         self.jpg_img_size = args.get('jpg_img_size', JPG_IMG_SIZE)
+        self.batch_size = args.get('batch_size', BATCH_SIZE)
+        self.num_workers = args.get('num_workers', NUM_WORKERS)
+        self.on_gpu = isinstance(args.get('gpu', None), (str, int))
 
         self.transform = A.Compose(
-            [ToTensorV2(p=1)], 
+            [ToTensorV2(p=1)],
             bbox_params=A.BboxParams(format='coco', label_fields=['cls']))
-        
+
     def prepare_data(self):
-        dir_jpg = self.dir_data / f'siim-covid19-resized-to-{self.jpg_img_size}px-jpg'
+        if (self.dir_data_tmp / 'train.feather').exists():
+            return
+
+        dir_jpg = self.dir_data / \
+            f'siim-covid19-resized-to-{self.jpg_img_size}px-jpg'
         assert dir_jpg.exists()
-        
+
         dir_siim = self.dir_data / 'siim-covid19-detection'
         assert dir_siim.exists()
-            
-        df_train = _prepare_train_examples(dir_siim, dir_jpg)
-        # df_test  = _prepare_test_examples(dir_siim, dir_jpg)
 
+        df_train = _prepare_train_examples(dir_siim, dir_jpg)
+        df_train['boxes'] = df_train.apply(
+            lambda row: _scale_box(row, sz=JPG_IMG_SIZE), axis=1)
+        df_train['pth_jpg'] = df_train.pth_jpg.apply(lambda p: p.as_posix())
         self.dir_data_tmp.mkdir(parents=True, exist_ok=True)
         df_train.to_feather(self.dir_data_tmp / 'train.feather')
 
+        # df_test  = _prepare_test_examples(dir_siim, dir_jpg)
+
     def setup(self):
-        df = pd.read_csv(self.dirname / 'train.feather')
-        dataset = AbnormalityDataset(df, transform=self.transform)
-        num_examples = len(dataset)
-        num_train_examples = int(0.8 * num_examples)
-        num_valid_examples = num_examples - num_train_examples
+        df = pd.read_feather(self.dir_data_tmp / 'train.feather')
+        val_cut = int(0.2 * len(df))
 
-        self.train_dataset, self.val_dataset = random_split(
-            dataset, lengths=[num_train_examples, num_valid_examples])
+        self.val_dataset = AbnormalityDataset(
+            df.iloc[:val_cut], transform=self.transform)
+        self.train_dataset = AbnormalityDataset(
+            df.iloc[val_cut:], transform=self.transform)
 
+    def train_dataloader(self):
+        return DataLoader(dataset=self.train_dataset,
+                          batch_size=self.batch_size,
+                          collate_fn=abnormality_collate_fn,
+                          shuffle=True,
+                          num_workers=self.num_workers,
+                          pin_memory=self.on_gpu)
+
+    def val_dataloader(self):
+        return DataLoader(dataset=self.val_dataset,
+                          batch_size=self.batch_size,
+                          collate_fn=abnormality_collate_fn,
+                          shuffle=False,
+                          num_workers=self.num_workers,
+                          pin_memory=self.on_gpu)
 
 
