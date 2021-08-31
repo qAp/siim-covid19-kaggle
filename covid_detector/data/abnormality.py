@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 
 from covid_detector.util import *
 from covid_detector.data.util import (_prepare_train_examples, 
-                                      _prepare_test_examples)
+                                      _prepare_test_examples, 
+                                      _scale_box)
 
 
 DIR_DATA = Path('/kaggle/input')
