@@ -75,12 +75,4 @@ def scale_box(box, scale0=1, scale1=1):
     return box
 
 
-def _scale_box(row, sz=256):
-    if pd.isna(row.boxes):
-        return np.nan
 
-    scale0 = sz / row.dim0
-    scale1 = sz / row.dim1
-    boxes = eval(row.boxes)
-    boxes_scaled = [scale_box(box, scale0, scale1) for box in boxes]
-    return boxes_scaled
