@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import random_split
+from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 
 import PIL
@@ -31,7 +31,7 @@ BATCH_SIZE = 16
 NUM_WORKERS = 4
 
 
-class AbnormalityDataset(torch.utils.data.Dataset):
+class AbnormalityDataset(Dataset):
     '''
     Object detection dataset for 5 abnormality classes:
     'opacity', 'negative', 'typical', 'indeterminate', and 'atypical'.
