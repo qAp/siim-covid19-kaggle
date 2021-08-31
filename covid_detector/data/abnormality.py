@@ -172,14 +172,14 @@ class Abnormality(pl.LightningDataModule):
         dir_siim = self.dir_data / 'siim-covid19-detection'
         assert dir_siim.exists()
 
-        df_train = _prepare_train_examples(dir_siim, dir_jpg)
+        df_train = prepare_train_examples(dir_siim, dir_jpg)
         df_train['boxes'] = df_train.apply(
             lambda row: _scale_box(row, sz=JPG_IMG_SIZE), axis=1)
         df_train['pth_jpg'] = df_train.pth_jpg.apply(lambda p: p.as_posix())
         self.dir_data_tmp.mkdir(parents=True, exist_ok=True)
         df_train.to_feather(self.dir_data_tmp / 'train.feather')
 
-        # df_test  = _prepare_test_examples(dir_siim, dir_jpg)
+        # df_test  = prepare_test_examples(dir_siim, dir_jpg)
 
     def setup(self):
         df = pd.read_feather(self.dir_data_tmp / 'train.feather')
