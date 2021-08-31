@@ -20,7 +20,7 @@ STUDY_LEVEL_TARGETS_SHORT = ["negative",
                              "atypical"]
 
 
-def _prepare_train_examples(dir_siim, dir_jpg):
+def prepare_train_examples(dir_siim, dir_jpg):
     df_jpg = pd.read_csv(dir_jpg / 'meta.csv')
     df_jpg['pth_jpg'] = df_jpg.apply(
         lambda r: dir_jpg / r.split / f'{r.image_id}.jpg', axis=1)
@@ -44,7 +44,7 @@ def _prepare_train_examples(dir_siim, dir_jpg):
     return df
 
 
-def _prepare_test_examples(dir_siim, dir_jpg):
+def prepare_test_examples(dir_siim, dir_jpg):
     df_jpg = pd.read_csv(dir_jpg / 'meta.csv')
     df_jpg['pth_jpg'] = df_jpg.apply(
         lambda r: dir_jpg / r.split / f'{r.image_id}.jpg', axis=1)
