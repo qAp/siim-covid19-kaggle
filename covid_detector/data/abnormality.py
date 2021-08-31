@@ -161,6 +161,8 @@ class Abnormality(pl.LightningDataModule):
             [ToTensorV2(p=1)],
             bbox_params=A.BboxParams(format='coco', label_fields=['cls']))
 
+        self.num_classes = len(CAT_NAMES)
+
     def prepare_data(self):
         if (self.dir_data_tmp / 'train.feather').exists():
             return
