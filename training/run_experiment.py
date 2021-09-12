@@ -1,12 +1,48 @@
 
+
+import importlib
+import argparse
 import pytorch_lightning as pl
 from covid_detector.models.util import create_model
+from covid_detector import lit_models
+
 
 def _setup_parser():
-    pass
 
-def _import_class():
-    pass
+    # Get a parser with pl.Trainer args
+    parser = argparse.ArgumentParser(add_help=False)
+    trainer_parser = pl.Trainer.add_argparse_args(parser)
+    trainer_parser._action_groups.title = 'Trainer args'
+
+    # Initialise another parser 
+    parser = argparse.ArgumentParser(add_help=False, parents=[trainer_parser])
+
+    # Set some default args
+    parser.add_argument('--data_class', type=str, default='Abnormality')
+    parser.add_argument('--load_checkpoint', type=str, default=None)
+
+    # Import default data_class
+    temp_args, _ = parser.parser_known_args()
+    data_class = _import_class(f'covid_detector.data.{temp_args.data_class}')
+
+    # Add data, lit model args to parser
+    data_group = parser.add_argument_group('Data Args')
+    data_class.add_to_argparse(data_group)
+
+    lit_model_group = parser.add_argument_group('Lit Model Args')
+    lit_models.BaseLitModel.add_to_argparse(lit_model_group)
+
+    parser.add_argument('--help', '-h', action='help')
+
+    return parser
+
+
+
+def _import_class(module_class_string: str = None):
+    module_str, class_str = module_class_string.rsplit('.', 1)
+    module = importlib.import_module(module_str)
+    return getattr(module, class_str)
+
 
 def main():
     '''
@@ -17,6 +53,7 @@ def main():
 
     data_class = _import_class(f'covid_detector.data.{args.data_class}')
     model_class = args.model_class
+    model_class.add_argparse_arguments(parser)
 
     data = data_class(args)
     model = create_model(name=args.model_name, data=data)
