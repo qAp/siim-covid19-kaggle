@@ -1,1 +1,1 @@
-from abnormality import Abnormality
+from .abnormality import Abnormality
