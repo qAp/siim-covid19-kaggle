@@ -48,6 +48,7 @@ def main():
     '''
     Run an experiment.
     '''
+    print('Enter main()')
     parser = _setup_parser()
     args = parser.parse_args()
     print('Parsed args')
