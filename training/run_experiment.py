@@ -22,7 +22,7 @@ def _setup_parser():
     parser.add_argument('--load_checkpoint', type=str, default=None)
 
     # Import default data_class
-    temp_args, _ = parser.parser_known_args()
+    temp_args, _ = parser.parse_known_args()
     data_class = _import_class(f'covid_detector.data.{temp_args.data_class}')
 
     # Add data, lit model args to parser
