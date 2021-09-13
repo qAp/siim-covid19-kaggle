@@ -52,8 +52,6 @@ def main():
     args = parser.parse_args()
 
     data_class = _import_class(f'covid_detector.data.{args.data_class}')
-    model_class = args.model_class
-    model_class.add_argparse_arguments(parser)
 
     data = data_class(args)
     model = create_model(name=args.model_name, data=data)
