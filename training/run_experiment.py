@@ -12,7 +12,7 @@ def _setup_parser():
     # Get a parser with pl.Trainer args
     parser = argparse.ArgumentParser(add_help=False)
     trainer_parser = pl.Trainer.add_argparse_args(parser)
-    trainer_parser._action_groups.title = 'Trainer args'
+    trainer_parser._action_groups[1].title = 'Trainer args'
 
     # Initialise another parser 
     parser = argparse.ArgumentParser(add_help=False, parents=[trainer_parser])
