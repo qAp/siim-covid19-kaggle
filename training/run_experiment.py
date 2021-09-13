@@ -50,14 +50,14 @@ def main():
     '''
     parser = _setup_parser()
     args = parser.parse_args()
-
+    print('Parsed args')
     data_class = _import_class(f'covid_detector.data.{args.data_class}')
 
     data = data_class(args)
     model = create_model(name=args.model_name, data=data)
 
     lit_model_class = lit_models.BaseLitModel
-
+    print('Create Lightning module')
     if args.load_from_checkpoint is not None:
         lit_model = lit_model_class.load_from_checkpoint(
             args.load_from_checkpoint, args=args, model=model)
@@ -79,6 +79,7 @@ def main():
         args, 
         callbacks=callbacks, logger=logger, 
         weights_save_path='training/logs')
+    print('Created pl.Trainer')
 
     trainer.tune(lit_model, datamodule=data)
     trainer.fit(lit_model, datamodule=data)
