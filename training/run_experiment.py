@@ -20,7 +20,7 @@ def _setup_parser():
     # Set some default args
     parser.add_argument('--data_class', type=str, default='Abnormality')
     parser.add_argument('--model_class', type=str, default='efficientdet_d0')
-    parser.add_argument('--load_checkpoint', type=str, default=None)
+    parser.add_argument('--load_from_checkpoint', type=str, default=None)
 
     # Import default data_class
     temp_args, _ = parser.parse_known_args()
