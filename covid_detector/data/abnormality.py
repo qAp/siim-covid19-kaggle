@@ -172,6 +172,18 @@ class Abnormality(pl.LightningDataModule):
 
         self.num_classes = len(CAT_NAMES)
 
+    @staticmethod
+    def add_to_argparser(parser):
+        parser.add_argument('--batch_size', type=int, default=BATCH_SIZE, 
+                            help='Number of examples to operate on per forward step.')
+
+        parser.add_argument('--num_workers', type=int, default=NUM_WORKERS,
+                            help='Number of additional processes to load data.')
+        return parser
+
+
+        
+
     def prepare_data(self):
         if (self.dir_data_tmp / 'train.feather').exists():
             return
