@@ -20,6 +20,15 @@ class BaseLitModel(pl.LightningModule):
         self.optimizer_class = getattr(torch.optim, optimizer)
         self.lr = self.args.get('lr', LR)
 
+    @staticmethod
+    def add_to_argparse(parser):
+        parser.add_argument('--lr', type=float, default=LR, 
+                            help='Learning rate.')
+
+        parser.add_argument('--optimizer', type=str, default=OPTIMIZER,
+                            help='Optimizer class from torch.optim')
+        return parser
+
     def configure_optimizers(self):
         optimizer = self.optimizer_class(self.parameters(), lr=self.lr)
         return {'optimizer': optimizer}
