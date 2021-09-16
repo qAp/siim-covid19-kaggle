@@ -68,10 +68,10 @@ def main():
     logger = pl.loggers.TensorBoardLogger(save_dir='training/logs')
 
     early_stopping_callback = pl.callbacks.EarlyStopping(
-        monitor='val_loss', mode='min', patience=10)
+        monitor='loss', mode='min', patience=10)
 
     model_checkpoint_callback = pl.callbacks.ModelCheckpoint(
-        filename='{epoch:03d}-{val_loss:.3f}', monitor='val_loss', mode='min')
+        filename='{epoch:03d}-{loss:.3f}', monitor='loss', mode='min')
 
     callbacks = [early_stopping_callback, model_checkpoint_callback]
 
