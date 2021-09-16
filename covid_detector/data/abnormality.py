@@ -173,7 +173,7 @@ class Abnormality(pl.LightningDataModule):
         self.num_classes = len(CAT_NAMES)
 
     @staticmethod
-    def add_to_argparser(parser):
+    def add_to_argparse(parser):
         parser.add_argument('--batch_size', type=int, default=BATCH_SIZE, 
                             help='Number of examples to operate on per forward step.')
 
