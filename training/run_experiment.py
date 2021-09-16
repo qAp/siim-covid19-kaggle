@@ -49,14 +49,13 @@ def main():
     '''
     Run an experiment.
     '''
-    print('Enter main()')
     parser = _setup_parser()
     args = parser.parse_args()
     print('Parsed args')
     data_class = _import_class(f'covid_detector.data.{args.data_class}')
 
     data = data_class(args)
-    model = create_model(name=args.model_name, data=data)
+    model = create_model(name=args.model_class, data=data)
 
     lit_model_class = lit_models.BaseLitModel
     print('Create Lightning module')
