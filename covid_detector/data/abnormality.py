@@ -204,7 +204,7 @@ class Abnormality(pl.LightningDataModule):
 
         # df_test  = prepare_test_examples(dir_siim, dir_jpg)
 
-    def setup(self):
+    def setup(self, stage=None):
         df = pd.read_feather(self.dir_data_tmp / 'train.feather')
         val_cut = int(0.2 * len(df))
 
